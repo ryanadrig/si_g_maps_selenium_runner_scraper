@@ -23,8 +23,8 @@ scrape_coord = None
 
 sites_data_gotten=[]
 places_gotten=[]
-last_rest = None
 sites_gotten = []
+last_rest = None
 last_places_empty = False
 last_places_empty_count = 0
 
@@ -40,6 +40,7 @@ def check_key_for_scrape():
     if key == "o":
         print("o key rs true")
         start_coord_url = driver.current_url
+        scrape_coord = get_scrape_coord_from_url(start_coord_url)
         run_scrape = True
     # terminate
     if key == "t":
@@ -86,6 +87,7 @@ def scroll_down_scroll_list_by_index(matches_len):
 
 def random_map_move_and_rec():
     global start_coord_url
+    global scrape_coord
     new_coord_url_coords_lat = start_coord_url.split("@")[1].split(",")[0]
     new_coord_url_coords_long = start_coord_url.split("@")[1].split(",")[1] 
     rand_ten_lat = random.randrange(0,lat_long_random_range + 1)
@@ -197,6 +199,7 @@ def click_restaraunts_and_get_websites(place_index, place_name):
     print("run click restraunts")
     global last_rest
     global run_scrape
+    global scrape_coord
     
     if run_scrape == False:
         return
@@ -204,29 +207,33 @@ def click_restaraunts_and_get_websites(place_index, place_name):
         print("click place")
         WebDriverWait(driver, 2).until(
             EC.presence_of_element_located((By.CLASS_NAME,
-            "hfpxzc"))
-        )
+            "hfpxzc")))
         places = driver.find_elements(By.CLASS_NAME,'hfpxzc')
-        
-
         places[place_index].click()
 
-        elem0_wrap = WebDriverWait(driver, 2).until(
+        phone_get = "n/a"
+        try:
+            elem0_wrap = WebDriverWait(driver, 2).until(
         EC.presence_of_element_located((By.CSS_SELECTOR,"button[data-tooltip='Copy phone number']")))
 
-        phone_number = elem0_wrap.find_element(By.CLASS_NAME,"Io6YTe").get_attribute("innerHTML")
-        print("phone get ~ " + str(phone_number))
+            phone_number = elem0_wrap.find_element(By.CLASS_NAME,"Io6YTe").get_attribute("innerHTML")
+            print("phone get ~ " + str(phone_number))
+            phone_get = phone_number
+        except Exception as e:
+            print("phone unavailable")
 
-
-        elem1_wrap = WebDriverWait(driver, 2).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR,
-            "a[data-item-id='authority']"))
-    )
+        site_get = "n/a"
+        try:
+            elem1_wrap = WebDriverWait(driver, 2).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR,
+            "a[data-item-id='authority']")))
             
+            website_div = elem1_wrap.find_element(By.CLASS_NAME,"Io6YTe")
 
-        website_div = elem1_wrap.find_element(By.CLASS_NAME,"Io6YTe")
-
-        site_get =  website_div.get_attribute("innerHTML")
+            site_get =  website_div.get_attribute("innerHTML")
+        except Exception as e:
+            print("site unavailable")
+        
         if (last_rest == site_get):
             print("new rest old rest")
             find_and_click_back_button()
@@ -234,10 +241,10 @@ def click_restaraunts_and_get_websites(place_index, place_name):
         last_rest = site_get
         print("got element ~" + site_get)
 
-        if site_get+"\n" not in sites_gotten:
+        if site_get != "n/a" and site_get+"\n" not in sites_gotten:
             sites_gotten.append(site_get+"\n")
             with open("rdata/"+scrape_coord+"-rdata", "a+") as of:
-                of.write(f"{place_name},{site_get},{phone_number}" + "\n")
+                of.write(f"{place_name},{site_get},{phone_get}" + "\n")
         
         print("loop finish back")
         find_and_click_back_button()
@@ -269,6 +276,12 @@ def loop_scrape():
     global scrape_coord
     global start_coord_url
     global run_scrape
+    global sites_data_gotten
+    global sites_gotten
+    global places_gotten
+    global last_places_empty
+
+
     if run_scrape == False:
         return 
     
