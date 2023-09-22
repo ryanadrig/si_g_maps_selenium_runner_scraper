@@ -112,6 +112,7 @@ def random_map_move_and_rec():
     + str(new_coord_url_coords_long_float) + "," + start_coord_url.split(",")[2]
     print("Create new random url ~ " + new_coord_url)
     start_coord_url = new_coord_url
+    scrape_coord = get_scrape_coord_from_url(start_coord_url)
     driver.get(start_coord_url)
     scroll_down_and_find_places()
 
